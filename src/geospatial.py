@@ -1,12 +1,29 @@
 import rasterio
 import numpy as np
-from shapely.geometry import Point,shape, Polygon, mapping
-import json
+from shapely.geometry import Point, shape, mapping
 from rasterio.warp import calculate_default_transform, reproject
 from rasterio.enums import Resampling
 from rasterio.features import shapes
 
-
+def raster_to_point(raster_filepath):
+    with rasterio.open(raster_filepath) as src:
+        ndvi = src.read(1)
+        src_crs = src.crs
+        height, width = ndvi.shape
+        transform = src.transform
+        dst_crs = 'EPSG:4326'
+        dst_transform, width, height = calculate_default_transform(src_crs, dst_crs, width, height, *src.bounds)
+        ndvi_wgs84 = np.empty((height, width), dtype=ndvi.dtype)
+        reproject(ndvi, ndvi_wgs84, src_transform=transform, src_crs=src_crs, dst_transform=dst_transform, dst_crs=dst_crs, dst_nodata=-9999)
+        points = []
+        for i in range(height):
+            for j in range(width):
+                value = ndvi_wgs84[i, j]
+                if not np.isnan(value) and value != 0:
+                    x_coord, y_coord = dst_transform * (j + 0.5, i + 0.5)
+                    point = [str(x_coord), str(y_coord), str(value)]
+                    points.append(point)
+        return points
 
 def raster_to_point(raster_filepath):
     # Open the NDVI raster in UTM CRS
@@ -37,7 +54,7 @@ def raster_to_point(raster_filepath):
                     #point = Point(x_coord, y_coord, value)
                     point = [str(x_coord),str(y_coord),str(value)]
                     points.append(point)
-    
+    print(points)
     return points
 
 def raster_to_geojson(raster_filepath,NDVI_threshold):
@@ -93,46 +110,6 @@ def raster_to_geojson(raster_filepath,NDVI_threshold):
             bbox[3] = max(bbox[3], bbox_feature[3])
 
         
-        '''
-        points = []
-        for i in range(height):
-            for j in range(width):
-                print(i,j)
-                value = ndvi_wgs84[i, j]
-                print(value)
-                if value < NDVI_threshold:
-                    print(f"Inside {value}")
-                    x_coord, y_coord = dst_transform * (j + 0.51, i + 0.51)
-                    point = Point(x_coord, y_coord, value)
-                    #point = [str(x_coord),str(y_coord),str(value)]
-                    points.append(point)
-        
-    
-    # Create a GeoJSON FeatureCollection from the list of Shapely Point objects
-    #features = [geojson.Feature(geometry=p, properties={"value": p.z}) for p in points]
-    #feature_collection = geojson.FeatureCollection(features)
-    
-    # Create a GeoJSON FeatureCollection from the list of Shapely Point objects
-    features = []
-    for point in points:
-        feature = {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [point.x, point.y]
-            },
-            "properties": {
-                "ndvi": point.z
-                }
-        }
-        features.append(feature)
-
-    geojson = {
-        "type": "FeatureCollection",
-        "features": feature
-    }
-        '''
-     
     geojson = {
         "type": "FeatureCollection",
         "bbox" : bbox,
