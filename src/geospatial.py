@@ -36,6 +36,8 @@ def raster_to_point(raster_filepath):
         transform = src.transform
         # Define the destination CRS (WGS 84)
         dst_crs = 'EPSG:4326'
+
+        print(f"SRC CRS : {src_crs} \t DST CRS : {dst_crs}")
         # Calculate the transformation required to warp the raster
         dst_transform, width, height = calculate_default_transform(src_crs, dst_crs, width, height, *src.bounds)
         # Create empty destination array
