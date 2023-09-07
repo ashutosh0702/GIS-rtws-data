@@ -8,12 +8,12 @@ phases:
   build:
     commands:
       - echo Building the Docker image...
-      - docker build -t getNDVI .
-      - docker tag getNDVI:latest 268065301848.dkr.ecr.us-west-2.amazonaws.com/getNDVI:latest
+      - docker build -t getndvi .
+      - docker tag getndvi:latest 268065301848.dkr.ecr.us-west-2.amazonaws.com/getndvi:latest
   post_build:
     commands:
       - echo Pushing the Docker image to Amazon ECR...
-      - docker push 268065301848.dkr.ecr.us-west-2.amazonaws.com/getNDVI:latest
+      - docker push 268065301848.dkr.ecr.us-west-2.amazonaws.com/getndvi:latest
      
       - echo Updating the AWS Lambda function...
-      - aws lambda update-function-code --function-name getNDVI --image-uri 268065301848.dkr.ecr.us-west-2.amazonaws.com/getNDVI:latest
+      - aws lambda update-function-code --function-name getndvi --image-uri 268065301848.dkr.ecr.us-west-2.amazonaws.com/getndvi:latest
